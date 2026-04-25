@@ -1,0 +1,201 @@
+gender,age,race,experience_years,education,hired
+Male,53,Hispanic,2,Bachelors,1
+Female,53,Hispanic,19,Bachelors,1
+Male,25,Black,9,Masters,1
+Male,51,Hispanic,7,Masters,1
+Male,58,Black,4,Bachelors,1
+Female,44,Hispanic,18,PhD,1
+Male,36,Asian,13,High School,1
+Male,50,Asian,11,Bachelors,1
+Male,57,Asian,4,PhD,1
+Female,34,Hispanic,4,High School,1
+Male,53,Black,10,Bachelors,1
+Male,28,Black,5,Bachelors,1
+Male,43,Hispanic,9,Masters,1
+Male,49,Asian,3,High School,1
+Female,23,Asian,17,High School,1
+Male,27,Black,3,PhD,1
+Female,49,Asian,16,Masters,0
+Female,49,White,4,Masters,0
+Female,41,Black,18,Masters,1
+Male,51,Asian,17,Masters,1
+Female,32,Black,7,High School,0
+Male,49,White,5,High School,1
+Female,46,Black,12,Bachelors,0
+Female,54,Black,17,Bachelors,1
+Female,22,Black,13,Masters,0
+Female,48,Black,3,Masters,0
+Female,34,White,9,Masters,1
+Female,24,Hispanic,17,Bachelors,1
+Female,27,Black,17,PhD,1
+Female,29,Black,16,PhD,1
+Male,48,Asian,13,Bachelors,1
+Male,30,Black,19,Bachelors,1
+Female,58,Asian,17,Bachelors,1
+Female,54,Hispanic,4,Bachelors,1
+Female,45,White,12,Bachelors,1
+Male,36,White,9,Bachelors,1
+Female,53,Hispanic,19,Masters,1
+Male,53,White,12,Masters,1
+Male,45,Hispanic,9,Masters,0
+Male,33,Hispanic,7,Masters,1
+Male,23,Hispanic,14,Bachelors,0
+Male,24,White,19,PhD,1
+Female,58,Asian,15,High School,1
+Female,38,Hispanic,16,Bachelors,0
+Female,23,Black,5,High School,1
+Female,23,White,3,PhD,1
+Female,49,Hispanic,12,Masters,1
+Male,44,Hispanic,4,PhD,1
+Female,58,Black,16,Bachelors,0
+Female,53,Asian,7,Masters,1
+Male,54,Asian,13,Bachelors,1
+Female,22,Asian,10,Masters,0
+Male,40,Hispanic,7,High School,1
+Female,23,Hispanic,14,High School,0
+Male,47,Hispanic,5,High School,1
+Female,53,White,3,PhD,1
+Female,27,Black,11,Bachelors,1
+Male,53,Hispanic,11,PhD,1
+Male,25,Black,18,High School,1
+Male,32,Black,15,Bachelors,1
+Male,38,Asian,12,High School,1
+Male,59,White,9,PhD,1
+Male,45,Hispanic,10,PhD,1
+Male,26,Asian,12,PhD,0
+Male,55,Asian,17,High School,1
+Female,27,Hispanic,6,Bachelors,1
+Female,43,Black,7,Bachelors,0
+Male,32,Asian,14,High School,1
+Female,37,Black,13,Bachelors,1
+Female,54,White,8,High School,1
+Female,30,Black,10,Bachelors,1
+Female,27,White,9,Masters,1
+Male,37,Black,18,Masters,1
+Female,50,Asian,2,PhD,0
+Male,24,Asian,5,Masters,1
+Female,41,White,5,Masters,1
+Female,57,Hispanic,6,Masters,0
+Female,40,White,19,High School,1
+Male,47,White,8,Masters,1
+Female,24,Black,16,Masters,1
+Male,40,Black,13,PhD,1
+Female,41,White,1,Masters,1
+Male,53,Asian,17,Masters,1
+Female,28,Black,7,Bachelors,0
+Male,54,Hispanic,13,PhD,1
+Male,39,Black,4,PhD,1
+Female,22,Black,4,PhD,0
+Male,32,Hispanic,6,PhD,1
+Female,49,White,19,PhD,1
+Female,46,Hispanic,12,PhD,1
+Female,44,White,7,High School,1
+Female,52,White,10,Masters,1
+Female,51,White,19,PhD,1
+Female,56,Hispanic,7,Masters,1
+Female,28,White,3,Masters,1
+Female,37,Asian,13,High School,1
+Female,47,Hispanic,13,PhD,0
+Female,23,Asian,18,Bachelors,0
+Female,22,White,8,High School,1
+Male,33,Black,9,Bachelors,1
+Male,26,White,7,Masters,1
+Female,58,Asian,1,Masters,1
+Female,53,Asian,3,High School,1
+Female,30,Hispanic,13,High School,0
+Female,56,Black,17,Bachelors,1
+Female,40,Hispanic,1,PhD,1
+Female,37,Asian,6,Bachelors,0
+Female,24,White,6,High School,1
+Female,41,Black,12,Bachelors,1
+Male,45,White,13,High School,1
+Female,54,White,13,Bachelors,1
+Male,45,Black,15,High School,0
+Female,32,Hispanic,16,High School,1
+Female,29,White,11,High School,1
+Male,57,Asian,5,PhD,1
+Female,59,White,4,Bachelors,0
+Male,41,Black,3,Bachelors,1
+Female,56,Black,19,Bachelors,1
+Female,46,Black,18,High School,1
+Male,56,Hispanic,15,Bachelors,0
+Female,46,White,9,Bachelors,0
+Male,50,Hispanic,17,High School,1
+Female,39,Hispanic,14,Masters,0
+Male,39,Black,15,High School,1
+Male,23,Black,1,Bachelors,1
+Female,56,Hispanic,3,High School,1
+Female,37,White,16,Masters,1
+Male,57,Asian,11,High School,0
+Female,54,Hispanic,12,Bachelors,1
+Female,25,White,10,Masters,1
+Female,54,Black,16,PhD,0
+Male,35,Black,8,Bachelors,1
+Male,42,White,6,Masters,1
+Male,41,Asian,12,Masters,1
+Male,29,Black,8,PhD,1
+Male,28,Black,4,High School,1
+Male,24,Black,8,High School,1
+Male,38,White,18,Bachelors,1
+Male,54,Hispanic,5,PhD,1
+Male,33,Black,9,High School,0
+Female,43,Hispanic,4,PhD,0
+Male,43,Asian,17,High School,1
+Female,51,Black,9,Masters,1
+Female,59,Black,1,High School,0
+Female,59,Asian,13,PhD,0
+Male,29,Black,16,Masters,1
+Male,48,Hispanic,13,Masters,1
+Male,48,White,14,Masters,1
+Male,55,Hispanic,3,PhD,1
+Female,42,White,6,Bachelors,1
+Male,51,White,18,Bachelors,1
+Male,54,Hispanic,19,Bachelors,1
+Male,49,Hispanic,5,PhD,1
+Male,54,Hispanic,15,Masters,0
+Male,26,Hispanic,2,Bachelors,1
+Female,40,Asian,10,PhD,0
+Male,25,Black,18,Bachelors,1
+Female,56,White,13,High School,0
+Male,38,Hispanic,5,Bachelors,1
+Female,49,Hispanic,1,Bachelors,1
+Male,51,Hispanic,1,Masters,0
+Male,50,Asian,18,PhD,1
+Female,27,Hispanic,15,Masters,0
+Female,56,Hispanic,17,Masters,0
+Female,58,Hispanic,11,Masters,1
+Male,45,Black,17,Masters,1
+Female,50,Asian,13,Masters,0
+Male,52,Hispanic,1,Bachelors,1
+Male,56,White,2,Masters,1
+Female,54,White,9,Masters,0
+Female,42,White,3,PhD,1
+Male,53,Asian,1,High School,1
+Male,44,Asian,16,Bachelors,1
+Female,54,White,6,Bachelors,1
+Female,24,Hispanic,17,Bachelors,0
+Female,39,Asian,5,Masters,1
+Male,46,White,5,Masters,1
+Male,52,White,6,Masters,1
+Male,24,Hispanic,3,PhD,0
+Male,45,Black,5,High School,1
+Male,53,Asian,5,Masters,1
+Male,43,Hispanic,10,High School,1
+Female,44,White,10,PhD,0
+Male,23,White,19,Bachelors,1
+Male,48,Hispanic,17,Masters,1
+Male,23,Asian,14,High School,1
+Female,47,Black,9,High School,0
+Male,38,Black,14,Masters,1
+Male,54,White,1,Bachelors,0
+Female,30,Asian,19,Bachelors,1
+Male,50,Black,13,Bachelors,1
+Male,47,Asian,13,PhD,1
+Male,56,Asian,4,High School,1
+Male,46,White,1,High School,0
+Male,45,Black,17,High School,0
+Female,34,Hispanic,8,PhD,1
+Female,28,White,2,High School,1
+Female,57,Black,8,PhD,1
+Male,41,Black,7,Bachelors,1
+Male,22,Black,2,Masters,1

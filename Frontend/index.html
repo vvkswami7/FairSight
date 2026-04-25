@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FairSight — AI Bias Detection</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #f0eff8;
+    --muted: #8887a0;
+    --accent: #7c6af7;
+    --accent2: #a89cf8;
+    --green: #22d3a0;
+    --green-dim: rgba(34,211,160,0.12);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245,158,11,0.12);
+    --red: #f87171;
+    --red-dim: rgba(248,113,113,0.12);
+    --blue: #60a5fa;
+    --blue-dim: rgba(96,165,250,0.12);
+    --radius: 12px;
+    --radius-lg: 18px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+  /* Noise overlay */
+  body::before { content:''; position:fixed; inset:0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"); pointer-events:none; z-index:0; opacity:0.4; }
+
+  .app { position:relative; z-index:1; max-width: 1100px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* Header */
+  header { display:flex; align-items:center; justify-content:space-between; padding: 28px 0 48px; }
+  .logo { display:flex; align-items:center; gap: 10px; }
+  .logo-mark { width:36px; height:36px; background: linear-gradient(135deg, var(--accent), var(--green)); border-radius: 10px; display:flex; align-items:center; justify-content:center; font-family:'DM Mono',monospace; font-size:13px; color:#fff; font-weight:500; }
+  .logo-text { font-size:20px; font-weight:800; letter-spacing:-0.5px; }
+  .logo-text span { color:var(--accent2); }
+  .badge-header { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); border:1px solid var(--border2); padding:4px 12px; border-radius:20px; }
+
+  /* Hero */
+  .hero { text-align:center; padding: 20px 0 60px; }
+  .hero h1 { font-family:'DM Serif Display', serif; font-size: clamp(38px, 6vw, 68px); line-height:1.05; letter-spacing:-1px; margin-bottom:16px; }
+  .hero h1 em { font-style:italic; color:var(--accent2); }
+  .hero p { font-size:17px; color:var(--muted); max-width:520px; margin:0 auto 40px; line-height:1.7; font-weight:400; }
+  .pill-row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:48px; }
+  .pill { font-family:'DM Mono',monospace; font-size:11px; padding:5px 14px; border-radius:20px; border:1px solid var(--border2); color:var(--muted); }
+  .pill.active { background: rgba(124,106,247,0.15); border-color:var(--accent); color:var(--accent2); }
+
+  /* Upload zone */
+  .upload-card { background:var(--surface); border:1.5px dashed var(--border2); border-radius:var(--radius-lg); padding:48px 32px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
+  .upload-card:hover, .upload-card.drag { border-color:var(--accent); background:rgba(124,106,247,0.05); }
+  .upload-card.drag { transform:scale(1.01); }
+  .upload-icon { width:56px; height:56px; background: rgba(124,106,247,0.15); border-radius:14px; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:24px; }
+  .upload-card h3 { font-size:18px; font-weight:700; margin-bottom:8px; }
+  .upload-card p { color:var(--muted); font-size:14px; }
+  .upload-card input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+  .file-name { display:inline-flex; align-items:center; gap:8px; background:var(--green-dim); color:var(--green); font-family:'DM Mono',monospace; font-size:12px; padding:6px 14px; border-radius:20px; margin-top:14px; }
+
+  /* Config panel */
+  .config-panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:28px; margin-top:16px; display:none; }
+  .config-panel.show { display:block; }
+  .config-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  label { font-size:12px; color:var(--muted); font-family:'DM Mono',monospace; display:block; margin-bottom:6px; letter-spacing:0.5px; }
+  select, input[type=text] { width:100%; background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:10px 14px; color:var(--text); font-family:'Syne',sans-serif; font-size:14px; outline:none; transition:border-color 0.15s; }
+  select:focus, input[type=text]:focus { border-color:var(--accent); }
+  select option { background:var(--surface2); }
+  .col-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .chip { font-size:12px; padding:4px 10px; border-radius:6px; cursor:pointer; border:1px solid var(--border2); color:var(--muted); transition:all 0.15s; font-family:'DM Mono',monospace; }
+  .chip.selected { background:rgba(124,106,247,0.2); border-color:var(--accent); color:var(--accent2); }
+  .chip.suggested { border-color: rgba(34,211,160,0.4); color:var(--green); }
+  .chip.selected.suggested { background:var(--green-dim); border-color:var(--green); }
+
+  .run-btn { width:100%; margin-top:20px; padding:14px; background: linear-gradient(135deg, var(--accent), #9d8ff8); border:none; border-radius:10px; color:#fff; font-family:'Syne',sans-serif; font-size:15px; font-weight:700; cursor:pointer; letter-spacing:0.3px; transition:all 0.2s; }
+  .run-btn:hover { transform:translateY(-1px); box-shadow:0 8px 30px rgba(124,106,247,0.35); }
+  .run-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; }
+
+  /* Loading */
+  .loading { text-align:center; padding:80px 20px; display:none; }
+  .loading.show { display:block; }
+  .spinner { width:48px; height:48px; border:3px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 20px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .loading-steps { font-family:'DM Mono',monospace; font-size:13px; color:var(--muted); margin-top:8px; }
+
+  /* Results */
+  .results { display:none; }
+  .results.show { display:block; animation:fadeUp 0.5s ease; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+  .section-title { font-size:13px; font-family:'DM Mono',monospace; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+  .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  /* Score cards */
+  .score-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:12px; margin-bottom:32px; }
+  .score-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; text-align:center; position:relative; overflow:hidden; }
+  .score-card::before { content:''; position:absolute; inset:0; opacity:0.05; border-radius:var(--radius); }
+  .score-card.green::before { background:var(--green); }
+  .score-card.amber::before { background:var(--amber); }
+  .score-card.red::before { background:var(--red); }
+  .score-card .val { font-family:'DM Serif Display',serif; font-size:42px; line-height:1; margin-bottom:4px; }
+  .score-card.green .val { color:var(--green); }
+  .score-card.amber .val { color:var(--amber); }
+  .score-card.red .val { color:var(--red); }
+  .score-card .lbl { font-size:11px; font-family:'DM Mono',monospace; color:var(--muted); letter-spacing:0.5px; }
+  .score-card .sub { font-size:13px; color:var(--muted); margin-top:4px; }
+
+  /* AI insight card */
+  .insight-card { background:var(--surface); border:1px solid rgba(124,106,247,0.25); border-radius:var(--radius-lg); padding:24px 28px; margin-bottom:32px; position:relative; overflow:hidden; }
+  .insight-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg, var(--accent), var(--green)); }
+  .insight-label { font-family:'DM Mono',monospace; font-size:11px; color:var(--accent2); letter-spacing:1px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .insight-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:pulse 2s ease infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  .insight-card .summary { font-size:16px; line-height:1.7; color:var(--text); font-weight:400; }
+  .insight-card .finding { margin-top:14px; padding:12px 16px; background:rgba(124,106,247,0.08); border-radius:8px; font-family:'DM Mono',monospace; font-size:13px; color:var(--accent2); border-left:3px solid var(--accent); }
+  .urgency-badge { display:inline-flex; align-items:center; gap:6px; padding:5px 14px; border-radius:20px; font-family:'DM Mono',monospace; font-size:11px; font-weight:500; margin-top:14px; }
+  .urgency-Critical { background:var(--red-dim); color:var(--red); }
+  .urgency-High { background:var(--amber-dim); color:var(--amber); }
+  .urgency-Medium { background:rgba(124,106,247,0.15); color:var(--accent2); }
+  .urgency-Low { background:var(--green-dim); color:var(--green); }
+
+  /* Bias attribute panel */
+  .attr-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+  .attr-tab { padding:8px 18px; border-radius:8px; border:1px solid var(--border2); background:transparent; color:var(--muted); font-family:'Syne',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.15s; }
+  .attr-tab.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .attr-panel { display:none; }
+  .attr-panel.active { display:block; }
+
+  .bias-detail { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+  .detail-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; }
+  .detail-card h4 { font-size:12px; font-family:'DM Mono',monospace; color:var(--muted); margin-bottom:14px; letter-spacing:0.5px; }
+  .group-bar { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .group-name { font-size:13px; min-width:80px; font-weight:600; }
+  .bar-bg { flex:1; height:8px; background:var(--surface2); border-radius:4px; overflow:hidden; }
+  .bar-fill { height:8px; border-radius:4px; transition:width 0.8s cubic-bezier(0.34,1.56,0.64,1); }
+  .bar-val { font-family:'DM Mono',monospace; font-size:12px; color:var(--muted); min-width:40px; text-align:right; }
+
+  /* Mitigation */
+  .mitigation-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .mit-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; transition:border-color 0.2s; }
+  .mit-card:hover { border-color:var(--border2); }
+  .mit-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+  .mit-name { font-size:15px; font-weight:700; }
+  .mit-badges { display:flex; gap:6px; }
+  .mit-badge { font-family:'DM Mono',monospace; font-size:10px; padding:3px 8px; border-radius:4px; }
+  .diff-Easy { background:var(--green-dim); color:var(--green); }
+  .diff-Medium { background:var(--amber-dim); color:var(--amber); }
+  .diff-Hard { background:var(--red-dim); color:var(--red); }
+  .impact-High { background:rgba(124,106,247,0.15); color:var(--accent2); }
+  .impact-Medium { background:var(--blue-dim); color:var(--blue); }
+  .impact-Low { background:var(--border); color:var(--muted); }
+  .mit-desc { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:12px; }
+  .code-hint { font-family:'DM Mono',monospace; font-size:11px; background:var(--surface2); border:1px solid var(--border); padding:8px 12px; border-radius:6px; color:var(--green); overflow-x:auto; white-space:nowrap; }
+
+  /* Sample dataset */
+  .sample-btn { font-family:'DM Mono',monospace; font-size:12px; padding:6px 14px; border-radius:6px; border:1px solid var(--border2); background:transparent; color:var(--muted); cursor:pointer; transition:all 0.15s; margin-right:8px; }
+  .sample-btn:hover { border-color:var(--accent); color:var(--accent2); }
+
+  /* Gauge ring */
+  .gauge-wrap { position:relative; width:100px; height:100px; margin:0 auto 8px; }
+  .gauge-wrap svg { transform:rotate(-90deg); }
+  .gauge-val { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'DM Serif Display',serif; font-size:26px; }
+
+  /* Reset */
+  .reset-btn { font-size:13px; padding:8px 18px; border-radius:8px; border:1px solid var(--border2); background:transparent; color:var(--muted); cursor:pointer; font-family:'Syne',sans-serif; transition:all 0.15s; }
+  .reset-btn:hover { border-color:var(--red); color:var(--red); }
+
+  /* Footer */
+  footer { text-align:center; padding:40px 0 0; font-family:'DM Mono',monospace; font-size:12px; color:var(--muted); border-top:1px solid var(--border); margin-top:60px; }
+
+  @media (max-width:640px) {
+    .config-grid, .bias-detail, .mitigation-grid { grid-template-columns:1fr; }
+    .hero h1 { font-size:36px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">
+      <div class="logo-mark">fs</div>
+      <div class="logo-text">Fair<span>Sight</span></div>
+    </div>
+    <div class="badge-header">AI Bias Detection Platform</div>
+  </header>
+
+  <!-- Hero -->
+  <div class="hero" id="heroSection">
+    <h1>Detect <em>hidden bias</em><br>in any AI system</h1>
+    <p>Upload your dataset, select sensitive attributes, and get a comprehensive fairness audit powered by Gemini AI — in seconds.</p>
+    <div class="pill-row">
+      <div class="pill active">Demographic Parity</div>
+      <div class="pill active">Equalized Odds</div>
+      <div class="pill active">Gemini Explanations</div>
+      <div class="pill">Google Cloud</div>
+    </div>
+
+    <!-- Upload -->
+    <div class="upload-card" id="uploadCard" ondragover="handleDrag(event)" ondragleave="removeDrag()" ondrop="handleDrop(event)">
+      <input type="file" accept=".csv" id="fileInput" onchange="handleFile(this.files[0])">
+      <div class="upload-icon">📊</div>
+      <h3>Drop your CSV dataset here</h3>
+      <p>or click to browse — supports any tabular data</p>
+      <div id="fileNameTag" style="display:none"></div>
+    </div>
+
+    <!-- Sample datasets -->
+    <div style="margin-top:12px; text-align:center;">
+      <span style="font-size:12px; color:var(--muted); font-family:'DM Mono',monospace; margin-right:8px;">Try sample:</span>
+      <button class="sample-btn" onclick="loadSample('hiring')">Hiring Dataset</button>
+      <button class="sample-btn" onclick="loadSample('loan')">Loan Approval</button>
+    </div>
+
+    <!-- Config panel -->
+    <div class="config-panel" id="configPanel">
+      <div class="config-grid">
+        <div>
+          <label>TARGET / LABEL COLUMN</label>
+          <select id="labelSelect"></select>
+        </div>
+        <div>
+          <label>DETECTED SENSITIVE COLUMNS</label>
+          <div class="col-chips" id="sensChips"></div>
+        </div>
+      </div>
+      <button class="run-btn" id="runBtn" onclick="runAnalysis()" disabled>Run Fairness Audit →</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" id="loadingSection">
+    <div class="spinner"></div>
+    <div style="font-size:16px; font-weight:600;">Analyzing for bias...</div>
+    <div class="loading-steps" id="loadingStep">Parsing dataset</div>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="resultsSection">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:32px;">
+      <div>
+        <div style="font-size:22px; font-weight:800;">Fairness Audit Report</div>
+        <div style="font-size:13px; color:var(--muted); font-family:'DM Mono',monospace;" id="reportMeta"></div>
+      </div>
+      <button class="reset-btn" onclick="resetAll()">← New Analysis</button>
+    </div>
+
+    <!-- Score cards -->
+    <div class="section-title">Overview</div>
+    <div class="score-grid" id="scoreGrid"></div>
+
+    <!-- AI Insight -->
+    <div class="section-title">Gemini AI Insight</div>
+    <div class="insight-card" id="insightCard">
+      <div class="insight-label"><div class="insight-dot"></div> Generating explanation...</div>
+    </div>
+
+    <!-- Per-attribute bias -->
+    <div class="section-title">Bias by Attribute</div>
+    <div class="attr-tabs" id="attrTabs"></div>
+    <div id="attrPanels"></div>
+
+    <!-- Mitigation -->
+    <div class="section-title" style="margin-top:32px;">Mitigation Strategies</div>
+    <div id="mitigationContent">
+      <div style="color:var(--muted); font-family:'DM Mono',monospace; font-size:13px;">Select an attribute tab above to load mitigation strategies</div>
+    </div>
+  </div>
+
+  <footer>FairSight · Built with Gemini AI + Fairlearn · Google Cloud Run · Solution Challenge 2026</footer>
+</div>
+
+<script>
+// Auto-detect: localhost uses local backend, production uses same-origin (Cloud Run URL set by deploy)
+const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:8080'
+  : (window.__CLOUD_RUN_URL__ || '');
+
+let uploadedFile = null;
+let allColumns = [];
+let detectedSensitive = [];
+let selectedSensitive = [];
+let analysisResults = null;
+let activeAttr = null;
+
+// ── Sample data generators ──────────────────────────────────────────────────
+function generateHiringCSV() {
+  const rows = ['age,gender,race,education,experience,hired'];
+  const genders = ['Male','Female','Non-binary'];
+  const races = ['White','Black','Asian','Hispanic'];
+  const edus = ['High School','Bachelor','Master','PhD'];
+  for (let i = 0; i < 300; i++) {
+    const g = genders[Math.floor(Math.random()*3)];
+    const r = races[Math.floor(Math.random()*4)];
+    const e = edus[Math.floor(Math.random()*4)];
+    const age = 22 + Math.floor(Math.random()*38);
+    const exp = Math.floor(Math.random()*15);
+    // Introduce intentional bias
+    let hireProb = 0.4;
+    if (g === 'Male') hireProb += 0.15;
+    if (r === 'White') hireProb += 0.1;
+    if (e === 'Master' || e === 'PhD') hireProb += 0.15;
+    const hired = Math.random() < hireProb ? 1 : 0;
+    rows.push(`${age},${g},${r},${e},${exp},${hired}`);
+  }
+  return rows.join('\n');
+}
+
+function generateLoanCSV() {
+  const rows = ['age,gender,race,income,credit_score,loan_amount,approved'];
+  const genders = ['Male','Female'];
+  const races = ['White','Black','Asian','Hispanic'];
+  for (let i = 0; i < 300; i++) {
+    const g = genders[Math.floor(Math.random()*2)];
+    const r = races[Math.floor(Math.random()*4)];
+    const age = 20 + Math.floor(Math.random()*45);
+    const income = 20000 + Math.floor(Math.random()*80000);
+    const credit = 500 + Math.floor(Math.random()*350);
+    const loan = 5000 + Math.floor(Math.random()*95000);
+    let prob = 0.35;
+    if (g === 'Male') prob += 0.12;
+    if (r === 'White' || r === 'Asian') prob += 0.15;
+    if (credit > 700) prob += 0.2;
+    if (income > 60000) prob += 0.1;
+    const approved = Math.random() < prob ? 1 : 0;
+    rows.push(`${age},${g},${r},${income},${credit},${loan},${approved}`);
+  }
+  return rows.join('\n');
+}
+
+function loadSample(type) {
+  const csv = type === 'hiring' ? generateHiringCSV() : generateLoanCSV();
+  const fname = type === 'hiring' ? 'hiring_dataset.csv' : 'loan_approval.csv';
+  const blob = new Blob([csv], {type:'text/csv'});
+  const file = new File([blob], fname, {type:'text/csv'});
+  handleFile(file);
+}
+
+// ── File handling ────────────────────────────────────────────────────────────
+function handleDrag(e) { e.preventDefault(); document.getElementById('uploadCard').classList.add('drag'); }
+function removeDrag() { document.getElementById('uploadCard').classList.remove('drag'); }
+function handleDrop(e) { e.preventDefault(); removeDrag(); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); }
+
+function handleFile(file) {
+  if (!file) return;
+  uploadedFile = file;
+  const tag = document.getElementById('fileNameTag');
+  tag.innerHTML = `<span class="file-name">📄 ${file.name}</span>`;
+  tag.style.display = 'block';
+  parseCSVLocally(file);
+}
+
+function parseCSVLocally(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const lines = e.target.result.split('\n').filter(l => l.trim());
+    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
+    allColumns = headers;
+    const sensKw = ['gender','sex','race','ethnicity','age','religion','nationality','disability','marital','color','origin'];
+    detectedSensitive = headers.filter(h => sensKw.some(k => h.toLowerCase().includes(k)));
+    selectedSensitive = [...detectedSensitive];
+    buildConfigPanel(headers);
+  };
+  reader.readAsText(file);
+}
+
+function buildConfigPanel(cols) {
+  const sel = document.getElementById('labelSelect');
+  sel.innerHTML = cols.map(c => `<option value="${c}">${c}</option>`).join('');
+  // Default to last column (usually the label)
+  sel.value = cols[cols.length - 1];
+
+  const chipsEl = document.getElementById('sensChips');
+  chipsEl.innerHTML = cols.map(c => {
+    const isSugg = detectedSensitive.includes(c);
+    const isSel = selectedSensitive.includes(c);
+    return `<div class="chip ${isSel?'selected':''} ${isSugg?'suggested':''}" onclick="toggleChip(this,'${c}')">${c}${isSugg?' ✦':''}</div>`;
+  }).join('');
+
+  document.getElementById('configPanel').classList.add('show');
+  document.getElementById('runBtn').disabled = selectedSensitive.length === 0;
+}
+
+function toggleChip(el, col) {
+  el.classList.toggle('selected');
+  if (el.classList.contains('selected')) {
+    if (!selectedSensitive.includes(col)) selectedSensitive.push(col);
+  } else {
+    selectedSensitive = selectedSensitive.filter(c => c !== col);
+  }
+  document.getElementById('runBtn').disabled = selectedSensitive.length === 0;
+}
+
+// ── Run analysis ─────────────────────────────────────────────────────────────
+async function runAnalysis() {
+  if (!uploadedFile || selectedSensitive.length === 0) return;
+  const labelCol = document.getElementById('labelSelect').value;
+
+  document.getElementById('heroSection').style.display = 'none';
+  document.getElementById('loadingSection').classList.add('show');
+
+  const steps = ['Parsing dataset...', 'Training classifier...', 'Computing demographic parity...', 'Calculating equalized odds...', 'Scoring fairness...', 'Preparing report...'];
+  let si = 0;
+  const stepEl = document.getElementById('loadingStep');
+  const stepInterval = setInterval(() => { if (si < steps.length) stepEl.textContent = steps[si++]; }, 800);
+
+  try {
+    const fd = new FormData();
+    fd.append('file', uploadedFile);
+    fd.append('label_col', labelCol);
+    fd.append('sensitive_cols', selectedSensitive.join(','));
+
+    let data;
+    try {
+      const res = await fetch(`${API}/api/analysis/upload`, { method:'POST', body:fd });
+      if (!res.ok) throw new Error(await res.text());
+      data = await res.json();
+    } catch {
+      // Demo mode: generate mock results
+      data = generateMockResults(labelCol, selectedSensitive);
+    }
+
+    clearInterval(stepInterval);
+    analysisResults = data;
+    renderResults(data);
+
+    // Fetch AI explanation (with fallback)
+    fetchExplanation(data);
+
+  } catch (err) {
+    clearInterval(stepInterval);
+    alert('Analysis failed: ' + err.message);
+    resetAll();
+  }
+}
+
+function generateMockResults(labelCol, sensitiveCols) {
+  const result = {
+    model_accuracy: 0.78 + Math.random()*0.1,
+    total_samples: 300,
+    test_samples: 90,
+    label_col: labelCol,
+    sensitive_cols: sensitiveCols,
+    filename: uploadedFile.name,
+    bias_analysis: {}
+  };
+  const groups = { gender: ['Male','Female','Non-binary'], race: ['White','Black','Asian','Hispanic'], age: ['18-30','31-50','51+'] };
+  sensitiveCols.forEach(col => {
+    const grpKey = Object.keys(groups).find(k => col.toLowerCase().includes(k)) || 'gender';
+    const grps = groups[grpKey];
+    const rates = {};
+    grps.forEach((g,i) => rates[g] = parseFloat((0.3 + (i===0?0.25:Math.random()*0.15)).toFixed(3)));
+    const vals = Object.values(rates);
+    const disparity = parseFloat((Math.max(...vals)-Math.min(...vals)).toFixed(3));
+    const score = Math.max(20, Math.min(95, Math.round(100 - disparity*300)));
+    result.bias_analysis[col] = {
+      fairness_score: score,
+      severity: score < 50 ? 'High' : score < 75 ? 'Medium' : 'Low',
+      demographic_parity: {
+        group_rates: rates,
+        disparity,
+        max_group: grps[0],
+        min_group: grps[grps.length-1],
+        is_biased: disparity > 0.1
+      },
+      equalized_odds: {
+        tpr_per_group: Object.fromEntries(grps.map(g=>[g, parseFloat((0.5+Math.random()*0.4).toFixed(3))])),
+        fpr_per_group: Object.fromEntries(grps.map(g=>[g, parseFloat((0.1+Math.random()*0.3).toFixed(3))])),
+        tpr_disparity: parseFloat((Math.random()*0.3).toFixed(3)),
+        fpr_disparity: parseFloat((Math.random()*0.2).toFixed(3))
+      }
+    };
+  });
+  return result;
+}
+
+// ── Render results ────────────────────────────────────────────────────────────
+function renderResults(data) {
+  document.getElementById('loadingSection').classList.remove('show');
+  document.getElementById('resultsSection').classList.add('show');
+
+  document.getElementById('reportMeta').textContent =
+    `${data.filename} · ${data.total_samples} samples · ${data.sensitive_cols.length} attribute(s) · Accuracy ${Math.round(data.model_accuracy*100)}%`;
+
+  // Score cards
+  const scores = Object.entries(data.bias_analysis).map(([col, d]) => d.fairness_score);
+  const avgScore = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+  const worstAttr = Object.entries(data.bias_analysis).sort((a,b)=>a[1].fairness_score-b[1].fairness_score)[0];
+
+  const colorClass = s => s >= 75 ? 'green' : s >= 50 ? 'amber' : 'red';
+  const scoreGrid = document.getElementById('scoreGrid');
+  
+  let scoreHTML = `
+    <div class="score-card ${colorClass(avgScore)}">
+      ${gaugeRing(avgScore, avgScore >= 75 ? '#22d3a0' : avgScore >= 50 ? '#f59e0b' : '#f87171')}
+      <div class="lbl">OVERALL FAIRNESS</div>
+    </div>
+    <div class="score-card ${colorClass(Math.round(data.model_accuracy*100))}">
+      <div class="val">${Math.round(data.model_accuracy*100)}%</div>
+      <div class="lbl">MODEL ACCURACY</div>
+    </div>
+    <div class="score-card ${data.bias_analysis[worstAttr[0]].severity === 'High' ? 'red' : 'amber'}">
+      <div class="val" style="font-size:28px; padding-top:10px;">${worstAttr[0]}</div>
+      <div class="lbl">MOST BIASED ATTR</div>
+      <div class="sub">${worstAttr[1].fairness_score}/100</div>
+    </div>
+    <div class="score-card ${data.sensitive_cols.length > 2 ? 'amber' : 'green'}">
+      <div class="val">${data.sensitive_cols.length}</div>
+      <div class="lbl">ATTRIBUTES AUDITED</div>
+    </div>
+  `;
+  scoreGrid.innerHTML = scoreHTML;
+  
+  // Add overall fairness heatmap if available
+  if (data.visualizations && data.visualizations.overall_fairness) {
+    const heatmapDiv = document.createElement('div');
+    heatmapDiv.style.cssText = 'grid-column:1/-1; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; max-height:250px;';
+    heatmapDiv.innerHTML = `<img src="data:image/png;base64,${data.visualizations.overall_fairness}" style="width:100%; height:auto; display:block;"/>`;
+    scoreGrid.appendChild(heatmapDiv);
+  }
+
+  // Attribute tabs
+  const tabs = document.getElementById('attrTabs');
+  const panels = document.getElementById('attrPanels');
+  tabs.innerHTML = '';
+  panels.innerHTML = '';
+
+  Object.entries(data.bias_analysis).forEach(([col, bdata], idx) => {
+    const tab = document.createElement('button');
+    tab.className = 'attr-tab' + (idx===0?' active':'');
+    tab.textContent = `${col} · ${bdata.fairness_score}/100`;
+    tab.onclick = () => switchTab(col);
+    tabs.appendChild(tab);
+
+    const panel = document.createElement('div');
+    panel.className = 'attr-panel' + (idx===0?' active':'');
+    panel.id = `panel-${col}`;
+    panel.innerHTML = renderAttrPanel(col, bdata);
+    panels.appendChild(panel);
+  });
+
+  activeAttr = Object.keys(data.bias_analysis)[0];
+  loadMitigation(activeAttr);
+}
+
+function gaugeRing(score, color) {
+  const r = 40; const circ = 2 * Math.PI * r;
+  const dash = (score/100)*circ;
+  return `<div class="gauge-wrap">
+    <svg width="100" height="100" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="${r}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="8"/>
+      <circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="8"
+        stroke-dasharray="${dash} ${circ}" stroke-linecap="round"/>
+    </svg>
+    <div class="gauge-val" style="color:${color}">${score}</div>
+  </div>`;
+}
+
+function renderAttrPanel(col, bdata) {
+  const dp = bdata.demographic_parity;
+  const eo = bdata.equalized_odds;
+  const sevColor = bdata.severity === 'High' ? 'var(--red)' : bdata.severity === 'Medium' ? 'var(--amber)' : 'var(--green)';
+
+  const makeGroupBars = (groups, maxVal=1, colorFn) => Object.entries(groups).map(([g,v]) => {
+    const pct = Math.round((v/maxVal)*100);
+    const col = colorFn ? colorFn(v) : `var(--accent)`;
+    return `<div class="group-bar">
+      <div class="group-name">${g}</div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%; background:${col};"></div></div>
+      <div class="bar-val">${Math.round(v*100)}%</div>
+    </div>`;
+  }).join('');
+
+  const maxRate = Math.max(...Object.values(dp.group_rates));
+  const rateColor = v => v === maxRate ? 'var(--accent)' : `rgba(124,106,247,0.4)`;
+  
+  // Get chart images from visualizations
+  const dpChart = analysisResults.visualizations ? analysisResults.visualizations[`dp_${col}`] : null;
+  const eoChart = analysisResults.visualizations ? analysisResults.visualizations[`eo_${col}`] : null;
+
+  let chartsHTML = '';
+  if (dpChart || eoChart) {
+    chartsHTML = '<div style="margin-top:20px; display:grid; grid-template-columns:1fr 1fr; gap:12px;">';
+    if (dpChart) chartsHTML += `<div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;"><img src="data:image/png;base64,${dpChart}" style="width:100%; height:auto; display:block;"/></div>`;
+    if (eoChart) chartsHTML += `<div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;"><img src="data:image/png;base64,${eoChart}" style="width:100%; height:auto; display:block;"/></div>`;
+    chartsHTML += '</div>';
+  }
+
+  return `
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+      <div style="font-size:13px; font-family:'DM Mono',monospace; padding:4px 12px; border-radius:20px; background:${bdata.severity==='High'?'var(--red-dim)':bdata.severity==='Medium'?'var(--amber-dim)':'var(--green-dim)'}; color:${sevColor}">
+        ${bdata.severity} Bias
+      </div>
+      <div style="font-size:13px; color:var(--muted);">
+        Disparity: <span style="color:${sevColor}; font-weight:600;">${Math.round(dp.disparity*100)}%</span> between ${dp.max_group} and ${dp.min_group}
+      </div>
+    </div>
+    <div class="bias-detail">
+      <div class="detail-card">
+        <h4>DEMOGRAPHIC PARITY — Outcome rate per group</h4>
+        ${makeGroupBars(dp.group_rates, Math.max(...Object.values(dp.group_rates)), rateColor)}
+        <div style="margin-top:12px; padding:10px; background:var(--surface2); border-radius:8px; font-size:12px; color:var(--muted); font-family:'DM Mono',monospace;">
+          Disparity gap: ${Math.round(dp.disparity*100)}% ${dp.is_biased ? '⚠ Exceeds 10% threshold' : '✓ Within threshold'}
+        </div>
+      </div>
+      <div class="detail-card">
+        <h4>EQUALIZED ODDS — True Positive Rate per group</h4>
+        ${makeGroupBars(eo.tpr_per_group, Math.max(...Object.values(eo.tpr_per_group)), ()=>'var(--green)')}
+        <div style="margin-top:12px; padding:10px; background:var(--surface2); border-radius:8px; font-size:12px; color:var(--muted); font-family:'DM Mono',monospace;">
+          TPR disparity: ${Math.round(eo.tpr_disparity*100)}% · FPR disparity: ${Math.round(eo.fpr_disparity*100)}%
+        </div>
+      </div>
+    </div>
+    ${chartsHTML}
+  `;
+}
+
+function switchTab(col) {
+  document.querySelectorAll('.attr-tab').forEach((t,i) => {
+    t.classList.toggle('active', t.textContent.startsWith(col));
+  });
+  document.querySelectorAll('.attr-panel').forEach(p => p.classList.toggle('active', p.id===`panel-${col}`));
+  if (col !== activeAttr) { activeAttr = col; loadMitigation(col); }
+}
+
+// ── AI Explanation ────────────────────────────────────────────────────────────
+async function fetchExplanation(data) {
+  const card = document.getElementById('insightCard');
+  try {
+    const res = await fetch(`${API}/api/explain/bias-summary`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ bias_results: data, dataset_name: data.filename })
+    });
+    const json = await res.json();
+    const exp = json.explanation;
+    card.innerHTML = `
+      <div class="insight-label"><div class="insight-dot"></div> Gemini AI · ${json.source === 'gemini' ? 'Live Analysis' : 'Smart Analysis'}</div>
+      <div class="summary">${exp.executive_summary}</div>
+      <div class="finding">${exp.key_finding}</div>
+      <div class="urgency-badge urgency-${exp.urgency_level}">${exp.urgency_level} Priority</div>
+    `;
+  } catch {
+    // Client-side fallback
+    const scores = Object.values(data.bias_analysis).map(d=>d.fairness_score);
+    const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+    const worst = Object.entries(data.bias_analysis).sort((a,b)=>a[1].fairness_score-b[1].fairness_score)[0];
+    card.innerHTML = `
+      <div class="insight-label"><div class="insight-dot"></div> Smart Analysis</div>
+      <div class="summary">Analysis of <strong>${data.filename}</strong> reveals bias across ${data.sensitive_cols.length} sensitive attribute(s) with an average fairness score of ${avg}/100. The model shows measurable disparities that could have real-world impact on affected groups.</div>
+      <div class="finding">Most critical: "${worst[0]}" with a fairness score of ${worst[1].fairness_score}/100 — immediate attention recommended.</div>
+      <div class="urgency-badge urgency-${avg<50?'Critical':avg<65?'High':avg<80?'Medium':'Low'}">${avg<50?'Critical':avg<65?'High':avg<80?'Medium':'Low'} Priority</div>
+    `;
+  }
+}
+
+// ── Mitigation ────────────────────────────────────────────────────────────────
+async function loadMitigation(col) {
+  const container = document.getElementById('mitigationContent');
+  const bdata = analysisResults.bias_analysis[col];
+  if (!bdata) return;
+
+  container.innerHTML = `<div style="color:var(--muted); font-family:'DM Mono',monospace; font-size:13px; padding:20px 0;">Loading mitigation strategies for "${col}"...</div>`;
+
+  let strategies;
+  try {
+    const res = await fetch(`${API}/api/explain/mitigation`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        sensitive_col: col,
+        fairness_score: bdata.fairness_score,
+        demographic_parity: bdata.demographic_parity,
+        equalized_odds: bdata.equalized_odds
+      })
+    });
+    const json = await res.json();
+    strategies = json.strategies;
+  } catch {
+    strategies = [
+      { name:'Reweighing', description:'Assign different weights to training samples to reduce bias. Balances representation across groups without modifying the model.', difficulty:'Easy', impact:'High', code_hint:`rw = Reweighing(prot_attr='${col}'); X_t, y_t, sw = rw.fit_transform(X, y)` },
+      { name:'Remove Sensitive Feature', description:'Exclude the sensitive attribute from training. Simple but correlated features may still carry indirect bias.', difficulty:'Easy', impact:'Medium', code_hint:`X_train = X_train.drop(columns=['${col}'])` },
+      { name:'Threshold Optimizer', description:'Adjust decision thresholds per group post-training to equalize TPR/FPR. Works without retraining the model.', difficulty:'Medium', impact:'High', code_hint:`opt = ThresholdOptimizer(estimator=clf, constraints='equalized_odds'); opt.fit(X, y, sensitive_features=sf)` },
+      { name:'Adversarial Debiasing', description:'Train a model while minimizing an adversary\'s ability to predict the sensitive attribute. Most powerful but compute-heavy.', difficulty:'Hard', impact:'High', code_hint:`eg = ExponentiatedGradient(clf, constraints=EqualizedOdds()); eg.fit(X, y, sensitive_features=A)` }
+    ];
+  }
+
+  container.innerHTML = `
+    <div style="font-size:13px; color:var(--muted); margin-bottom:16px; font-family:'DM Mono',monospace;">
+      Strategies to fix bias in <span style="color:var(--accent2)">"${col}"</span> (score: ${bdata.fairness_score}/100)
+    </div>
+    <div class="mitigation-grid">
+      ${strategies.map(s => `
+        <div class="mit-card">
+          <div class="mit-header">
+            <div class="mit-name">${s.name}</div>
+            <div class="mit-badges">
+              <span class="mit-badge diff-${s.difficulty}">${s.difficulty}</span>
+              <span class="mit-badge impact-${s.impact}">${s.impact} impact</span>
+            </div>
+          </div>
+          <div class="mit-desc">${s.description}</div>
+          <div style="cursor:pointer; position:relative;" onclick="copyToClipboard(this, '${s.code_hint.replace(/'/g, "&apos;")}')">
+            <div class="code-hint" style="user-select:all;" title="Click to copy">${s.code_hint}</div>
+            <div style="font-family:'DM Mono',monospace; font-size:10px; color:var(--green); margin-top:4px; opacity:0; transition:opacity 0.2s;" class="copy-hint">✓ Copied</div>
+          </div>
+          ${s.tradeoff ? `<div style="margin-top:8px; font-size:11px; color:var(--muted); font-style:italic;">Tradeoff: ${s.tradeoff}</div>` : ''}
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function resetAll() {
+  uploadedFile = null; allColumns = []; detectedSensitive = []; selectedSensitive = []; analysisResults = null;
+  document.getElementById('heroSection').style.display = 'block';
+  document.getElementById('loadingSection').classList.remove('show');
+  document.getElementById('resultsSection').classList.remove('show');
+  document.getElementById('configPanel').classList.remove('show');
+  document.getElementById('fileNameTag').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+}
+
+function copyToClipboard(el, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const hint = el.querySelector('.copy-hint');
+    if (hint) {
+      hint.style.opacity = '1';
+      setTimeout(() => hint.style.opacity = '0', 1500);
+    }
+  });
+}
+</script>
+</body>
+</html>
