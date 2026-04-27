@@ -28,6 +28,24 @@ app.add_middleware(
 app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
 app.include_router(gemini_explain.router, prefix="/api/explain", tags=["explain"])
 
+@app.get("/debug/gemini")
+async def debug_gemini():
+    import os
+    from google import genai
+
+    api_key = os.getenv("GEMINI_API_KEY", "")
+    if not api_key:
+        return {"status": "error", "message": "API key not set"}
+    try:
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents="Say hello in one word"
+        )
+        return {"status": "ok", "response": response.text}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "FairSight API"}

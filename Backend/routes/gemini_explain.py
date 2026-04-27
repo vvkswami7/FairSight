@@ -1,20 +1,25 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+import logging
 import os
 import json
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 def get_client():
     api_key = os.getenv("GEMINI_API_KEY", "")
     if not api_key:
+        logger.error("GEMINI_API_KEY is not set or empty")
         return None
     try:
         from google import genai
-        return genai.Client(api_key=api_key)
+        client = genai.Client(api_key=api_key)
+        logger.info("Gemini client initialized successfully")
+        return client
     except Exception as e:
-        print(f"Client init error: {e}")
+        logger.error(f"Client init error: {e}", exc_info=True)
         return None
 
 class ExplainRequest(BaseModel):
@@ -69,11 +74,16 @@ async def explain_bias(req: ExplainRequest):
 
     if client:
         try:
-            response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+            response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=prompt
+            )
             parsed = parse_gemini_json(response.text)
             return JSONResponse(content={"source": "gemini", "explanation": parsed})
         except Exception as e:
-            print(f"Gemini bias-summary error: {e}")
+            logger.error(f"Gemini bias-summary error: {e}", exc_info=True)
+    else:
+        logger.warning("Gemini client is None — using fallback")
 
     # Fallback
     overall_scores = [v.get("fairness_score", 100) for v in bias_data.values()]
@@ -121,11 +131,16 @@ async def suggest_mitigation(req: MitigationRequest):
 
     if client:
         try:
-            response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+            response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=prompt
+            )
             strategies = parse_gemini_json(response.text)
             return JSONResponse(content={"source": "gemini", "strategies": strategies})
         except Exception as e:
-            print(f"Gemini mitigation error: {e}")
+            logger.error(f"Gemini mitigation error: {e}", exc_info=True)
+    else:
+        logger.warning("Gemini client is None — using fallback")
 
     # Fallback
     return JSONResponse(content={"source": "fallback", "strategies": [
