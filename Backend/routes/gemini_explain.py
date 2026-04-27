@@ -69,7 +69,7 @@ async def explain_bias(req: ExplainRequest):
 
     if client:
         try:
-            response = client.models.generate_content(model="gemini-1.5-flash", contents=prompt)
+            response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
             parsed = parse_gemini_json(response.text)
             return JSONResponse(content={"source": "gemini", "explanation": parsed})
         except Exception as e:
@@ -121,7 +121,7 @@ async def suggest_mitigation(req: MitigationRequest):
 
     if client:
         try:
-            response = client.models.generate_content(model="gemini-1.5-flash", contents=prompt)
+            response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
             strategies = parse_gemini_json(response.text)
             return JSONResponse(content={"source": "gemini", "strategies": strategies})
         except Exception as e:

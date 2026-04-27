@@ -1,10 +1,14 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 from routes import analysis, gemini_explain
 
 app = FastAPI(title="FairSight API", version="1.0.0")
+
+# Mount static files - serve frontend from root URL
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 app.add_middleware(
     CORSMiddleware,
