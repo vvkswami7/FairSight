@@ -7,9 +7,6 @@ from routes import analysis, gemini_explain
 
 app = FastAPI(title="FairSight API", version="1.0.0")
 
-# Mount static files - serve frontend from root URL
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -27,6 +24,9 @@ app.add_middleware(
 
 app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
 app.include_router(gemini_explain.router, prefix="/api/explain", tags=["explain"])
+
+# Mount static files after API routes, so /api/* routes are matched first
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 @app.get("/debug/gemini")
 async def debug_gemini():
