@@ -140,8 +140,8 @@
   .bar-val { font-family:'DM Mono',monospace; font-size:12px; color:var(--muted); min-width:40px; text-align:right; }
 
   /* Mitigation */
-  .mitigation-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .mit-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; transition:border-color 0.2s; }
+  .mitigation-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; overflow:hidden; }
+  .mit-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; transition:border-color 0.2s; min-width:0; max-width:100%; }
   .mit-card:hover { border-color:var(--border2); }
   .mit-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
   .mit-name { font-size:15px; font-weight:700; }
@@ -153,8 +153,9 @@
   .impact-High { background:rgba(124,106,247,0.15); color:var(--accent2); }
   .impact-Medium { background:var(--blue-dim); color:var(--blue); }
   .impact-Low { background:var(--border); color:var(--muted); }
-  .mit-desc { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:12px; }
-  .code-hint { font-family:'DM Mono',monospace; font-size:11px; background:var(--surface2); border:1px solid var(--border); padding:8px 12px; border-radius:6px; color:var(--green); overflow-x:auto; white-space:nowrap; }
+  .mit-desc { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:12px; word-break:break-word; overflow-wrap:break-word; white-space:normal; }
+  .code-hint { font-family:'DM Mono',monospace; font-size:11px; background:var(--surface2); border:1px solid var(--border); padding:8px 12px; border-radius:6px; color:var(--green); overflow-x:auto; white-space:pre-wrap; word-break:break-all; }
+  .mit-tradeoff { margin-top:8px; font-size:11px; color:var(--muted); font-style:italic; word-break:break-word; overflow-wrap:break-word; white-space:normal; }
 
   /* Sample dataset */
   .sample-btn { font-family:'DM Mono',monospace; font-size:12px; padding:6px 14px; border-radius:6px; border:1px solid var(--border2); background:transparent; color:var(--muted); cursor:pointer; transition:all 0.15s; margin-right:8px; }
@@ -705,7 +706,7 @@ async function loadMitigation(col) {
             <div class="code-hint" style="user-select:all;" title="Click to copy">${s.code_hint}</div>
             <div style="font-family:'DM Mono',monospace; font-size:10px; color:var(--green); margin-top:4px; opacity:0; transition:opacity 0.2s;" class="copy-hint">✓ Copied</div>
           </div>
-          ${s.tradeoff ? `<div style="margin-top:8px; font-size:11px; color:var(--muted); font-style:italic;">Tradeoff: ${s.tradeoff}</div>` : ''}
+          ${s.tradeoff ? `<div class="mit-tradeoff">Tradeoff: ${s.tradeoff}</div>` : ''}
         </div>
       `).join('')}
     </div>
