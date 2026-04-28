@@ -8,12 +8,19 @@ from typing import Optional
 
 
 def detect_sensitive_columns(df: pd.DataFrame) -> list:
-    sensitive_keywords = ['gender','sex','race','ethnicity','age','religion','nationality','disability','marital','color','origin']
+    sensitive_keywords = [
+        'gender', 'sex', 'race', 'ethnicity', 'age',
+        'religion', 'nationality', 'disability', 'marital',
+        'color', 'origin', 'type', 'state', 'region',
+        'facility', 'category', 'class', 'group',
+        'department', 'location', 'city', 'country',
+        'tribe', 'caste', 'language', 'income', 'zip'
+    ]
     return [col for col in df.columns if any(kw in col.lower() for kw in sensitive_keywords)]
 
 
 def compute_demographic_parity(df: pd.DataFrame, sensitive_col: str, label_col: str) -> dict:
-    groups = df[sensitive_col].unique()
+    groups = df[sensitive_col].dropna().unique()
     group_rates = {}
     for g in groups:
         subset = df[df[sensitive_col] == g]
@@ -36,7 +43,7 @@ def compute_demographic_parity(df: pd.DataFrame, sensitive_col: str, label_col: 
 
 
 def compute_equalized_odds(df: pd.DataFrame, sensitive_col: str, label_col: str, pred_col: str) -> dict:
-    groups = df[sensitive_col].unique()
+    groups = df[sensitive_col].dropna().unique()
     tpr_per_group = {}
     fpr_per_group = {}
     for g in groups:
@@ -80,6 +87,22 @@ def train_and_analyze(df: pd.DataFrame, label_col: str, sensitive_cols: list) ->
     if label_col not in df.columns:
         raise ValueError(f"Label column '{label_col}' not found.")
 
+    df = df.dropna().reset_index(drop=True)
+    if len(df) < 30:
+        raise ValueError(f"Only {len(df)} rows remain after removing missing values. Need at least 30 clean rows.")
+
+    unique_labels = df[label_col].nunique()
+    if unique_labels > 2:
+        median_val = df[label_col].median()
+        df[label_col] = (df[label_col] > median_val).astype(int)
+        label_binarized = True
+        binarize_threshold = float(median_val)
+    else:
+        label_binarized = False
+        binarize_threshold = None
+
+    original_label_unique_values = int(unique_labels)
+
     # Keep original values for fairness metrics BEFORE encoding
     original_df = df.copy()
 
@@ -106,9 +129,13 @@ def train_and_analyze(df: pd.DataFrame, label_col: str, sensitive_cols: list) ->
     results = {
         "model_accuracy": accuracy,
         "total_samples": len(df),
+        "rows_after_cleaning": len(df),
         "test_samples": len(X_test),
         "label_col": label_col,
         "sensitive_cols": sensitive_cols,
+        "label_binarized": label_binarized,
+        "binarize_threshold": binarize_threshold,
+        "original_label_unique_values": original_label_unique_values,
         "bias_analysis": {}
     }
 
@@ -116,11 +143,14 @@ def train_and_analyze(df: pd.DataFrame, label_col: str, sensitive_cols: list) ->
         if col not in orig_test.columns:
             continue
 
-        # Bin numeric columns (like age) into readable ranges
+        # Bin numeric sensitive columns (like age or score) into readable ranges
         working = orig_test.copy()
-        if pd.api.types.is_numeric_dtype(working[col]):
-            bins = pd.cut(working[col], bins=3, precision=0)
-            working[col] = bins.astype(str)
+        numeric_col = pd.to_numeric(working[col], errors="coerce")
+        if numeric_col.notna().any():
+            working[col] = pd.cut(numeric_col, bins=4, precision=0).astype(str)
+        working = working[working[col].notna()]
+        if working.empty:
+            continue
 
         dp = compute_demographic_parity(working, col, "__label__")
         eo = compute_equalized_odds(working, col, "__label__", "__pred__")

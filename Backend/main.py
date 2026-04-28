@@ -1,6 +1,8 @@
+import os
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 from routes import analysis, gemini_explain
@@ -25,8 +27,17 @@ app.add_middleware(
 app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
 app.include_router(gemini_explain.router, prefix="/api/explain", tags=["explain"])
 
-# Mount static files after API routes, so /api/* routes are matched first
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+# Get the absolute path to the directory where main.py lives
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+# Explicitly serve index.html at the root URL
+@app.get("/")
+async def serve_frontend():
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+
+# Mount the static directory to serve CSS, JS, and images
+app.mount("/", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/debug/gemini")
 async def debug_gemini():

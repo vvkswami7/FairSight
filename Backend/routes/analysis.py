@@ -27,8 +27,15 @@ async def upload_and_analyze(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to parse CSV: {str(e)}")
 
-    if df.empty or len(df) < 5:
-        raise HTTPException(status_code=400, detail="Dataset must have at least 5 rows.")
+    df.columns = df.columns.str.strip()
+    original_row_count = len(df)
+    sampled = False
+    if len(df) > 10000:
+        df = df.sample(n=10000, random_state=42).reset_index(drop=True)
+        sampled = True
+
+    if df.empty or len(df) < 10:
+        raise HTTPException(status_code=400, detail="Dataset must have at least 10 rows.")
 
     sensitive_list = [s.strip() for s in sensitive_cols.split(",") if s.strip()]
 
@@ -43,6 +50,9 @@ async def upload_and_analyze(
         results["column_stats"] = col_stats
         results["columns"] = list(df.columns)
         results["filename"] = file.filename
+        results["original_row_count"] = original_row_count
+        results["sampled"] = sampled
+        results["sampled_to"] = 10000 if sampled else original_row_count
         
         # Generate visualizations (base64-encoded charts)
         visualizations = generate_all_visualizations(results)
@@ -50,7 +60,11 @@ async def upload_and_analyze(
         
         return JSONResponse(content=results)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        import traceback
+        raise HTTPException(
+            status_code=500,
+            detail=f"Analysis failed: {str(e)} | Trace: {traceback.format_exc()[-500:]}"
+        )
 
 
 @router.post("/preview")

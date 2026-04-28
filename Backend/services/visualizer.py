@@ -63,7 +63,7 @@ def generate_demographic_parity_chart(group_rates: Dict[str, float], attribute: 
         for r in rates
     ]
     
-    bars = ax.bar(groups, rates, color=colors, edgecolor='rgba(255,255,255,0.2)', linewidth=1.5, alpha=0.85)
+    bars = ax.bar(groups, rates, color=colors, edgecolor=(1, 1, 1, 0.2), linewidth=1.5, alpha=0.85)
     
     # Add value labels on bars
     for bar, rate in zip(bars, rates):
@@ -80,15 +80,15 @@ def generate_demographic_parity_chart(group_rates: Dict[str, float], attribute: 
     ax.set_ylabel('Positive Outcome Rate', fontsize=12, fontweight='bold', color='#f0eff8')
     ax.set_title(f'Demographic Parity: {attribute}', fontsize=14, fontweight='bold', color='#f0eff8', pad=20)
     ax.set_ylim(0, max(rates) * 1.15 if rates else 1)
-    ax.legend(loc='upper right', framealpha=0.9, facecolor='#1a1a26', edgecolor='rgba(255,255,255,0.1)')
+    ax.legend(loc='upper right', framealpha=0.9, facecolor='#1a1a26', edgecolor=(1, 1, 1, 0.1))
     
     # Styling
     ax.set_facecolor('#0a0a0f')
     fig.patch.set_facecolor('#12121a')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_color('rgba(255,255,255,0.1)')
-    ax.spines['bottom'].set_color('rgba(255,255,255,0.1)')
+    ax.spines['left'].set_color((1, 1, 1, 0.1))
+    ax.spines['bottom'].set_color((1, 1, 1, 0.1))
     ax.tick_params(colors='#8887a0')
     
     return fig_to_base64(fig)
@@ -124,9 +124,9 @@ def generate_equalized_odds_chart(tpr_per_group: Dict[str, float], fpr_per_group
     
     # Plot TPR and FPR side by side
     bars1 = ax.bar([i - width/2 for i in x], tpr_vals, width, label='True Positive Rate (TPR)',
-                   color=PALETTE["success"], edgecolor='rgba(255,255,255,0.2)', linewidth=1.5, alpha=0.85)
+                   color=PALETTE["success"], edgecolor=(1, 1, 1, 0.2), linewidth=1.5, alpha=0.85)
     bars2 = ax.bar([i + width/2 for i in x], fpr_vals, width, label='False Positive Rate (FPR)',
-                   color=PALETTE["danger"], edgecolor='rgba(255,255,255,0.2)', linewidth=1.5, alpha=0.85)
+                   color=PALETTE["danger"], edgecolor=(1, 1, 1, 0.2), linewidth=1.5, alpha=0.85)
     
     # Add value labels
     for bars in [bars1, bars2]:
@@ -142,15 +142,15 @@ def generate_equalized_odds_chart(tpr_per_group: Dict[str, float], fpr_per_group
     ax.set_xticks(x)
     ax.set_xticklabels(groups)
     ax.set_ylim(0, max(tpr_vals + fpr_vals) * 1.15 if (tpr_vals + fpr_vals) else 1)
-    ax.legend(loc='upper right', framealpha=0.9, facecolor='#1a1a26', edgecolor='rgba(255,255,255,0.1)')
+    ax.legend(loc='upper right', framealpha=0.9, facecolor='#1a1a26', edgecolor=(1, 1, 1, 0.1))
     
     # Styling
     ax.set_facecolor('#0a0a0f')
     fig.patch.set_facecolor('#12121a')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_color('rgba(255,255,255,0.1)')
-    ax.spines['bottom'].set_color('rgba(255,255,255,0.1)')
+    ax.spines['left'].set_color((1, 1, 1, 0.1))
+    ax.spines['bottom'].set_color((1, 1, 1, 0.1))
     ax.tick_params(colors='#8887a0')
     
     return fig_to_base64(fig)
@@ -183,7 +183,7 @@ def generate_fairness_score_heatmap(bias_analysis: Dict) -> str:
         for s in scores
     ]
     
-    bars = ax.barh(attributes, scores, color=colors, edgecolor='rgba(255,255,255,0.2)', linewidth=1.5, alpha=0.85)
+    bars = ax.barh(attributes, scores, color=colors, edgecolor=(1, 1, 1, 0.2), linewidth=1.5, alpha=0.85)
     
     # Add score labels
     for bar, score in zip(bars, scores):
@@ -201,8 +201,8 @@ def generate_fairness_score_heatmap(bias_analysis: Dict) -> str:
     fig.patch.set_facecolor('#12121a')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_color('rgba(255,255,255,0.1)')
-    ax.spines['bottom'].set_color('rgba(255,255,255,0.1)')
+    ax.spines['left'].set_color((1, 1, 1, 0.1))
+    ax.spines['bottom'].set_color((1, 1, 1, 0.1))
     ax.tick_params(colors='#8887a0')
     
     return fig_to_base64(fig)

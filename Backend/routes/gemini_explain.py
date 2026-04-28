@@ -81,7 +81,9 @@ async def explain_bias(req: ExplainRequest):
             parsed = parse_gemini_json(response.text)
             return JSONResponse(content={"source": "gemini", "explanation": parsed})
         except Exception as e:
-            logger.error(f"Gemini bias-summary error: {e}", exc_info=True)
+            import logging
+            logging.getLogger(__name__).error(
+                f"Gemini error: {e}", exc_info=True)
     else:
         logger.warning("Gemini client is None — using fallback")
 
@@ -138,7 +140,9 @@ async def suggest_mitigation(req: MitigationRequest):
             strategies = parse_gemini_json(response.text)
             return JSONResponse(content={"source": "gemini", "strategies": strategies})
         except Exception as e:
-            logger.error(f"Gemini mitigation error: {e}", exc_info=True)
+            import logging
+            logging.getLogger(__name__).error(
+                f"Gemini error: {e}", exc_info=True)
     else:
         logger.warning("Gemini client is None — using fallback")
 
